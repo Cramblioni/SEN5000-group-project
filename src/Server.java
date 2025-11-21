@@ -7,13 +7,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.OptionalInt;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Server {
 
     public static final Path CSVPATH = Path.of("./Co2_Readings.csv");
 
-    static HandleClient[] clients = new HandleClient[4];
+    final static ThreadPoolExecutor clientPool = new ThreadPoolExecutor(
+            4, 4, 2, TimeUnit.MINUTES,
+            new ArrayBlockingQueue<Runnable>(4)
+    );
 
     public static void main(String[] args) throws IOException {
 
@@ -25,28 +31,13 @@ public class Server {
 
         while (true) {
             final Socket clientConnection = socket.accept();
-            final OptionalInt slot = getFreeClientSlot();
-            if (slot.isEmpty()) {
+            try {
+                clientPool.execute(new HandleClient(clientConnection));
+            } catch (RejectedExecutionException e) {
                 clientConnection.getOutputStream().write("NO".getBytes());
                 clientConnection.close();
-                continue;
             }
-            final HandleClient handler = clients[slot.getAsInt()];
-            handler.client = clientConnection;
-            handler.start();
         }
-    }
-
-    private static OptionalInt getFreeClientSlot() {
-        for (int i = 0; i < clients.length; i += 1) {
-            if (clients[i] == null) {
-                clients[i] = new HandleClient(null);
-                return OptionalInt.of(i);
-            }
-            if (clients[i].isAlive() && !clients[i].isInterrupted())
-                return OptionalInt.of(i);
-        }
-        return OptionalInt.empty();
     }
 
     private static InetAddress getAddress(String[] _args) {
