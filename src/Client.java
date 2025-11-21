@@ -1,5 +1,8 @@
 import Data.Co2Message;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
@@ -11,6 +14,15 @@ public class Client {
 
         final float reading = validateReading(args[4]);
 
+        short port;
+        try {
+            port = (short)Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            printUsage("Port must be a port number");
+            return;
+        }
+
+        /*
         final Co2Message test = new Co2Message(args[2], args[3], reading);
         final byte[] raw_test = test.toBytes();
         System.out.println("record of  " + test);
@@ -18,19 +30,33 @@ public class Client {
 
         final Co2Message got = Co2Message.fromBytes(raw_test);
         System.out.println("loaded " + got);
-
+        */
+        final Co2Message message = new Co2Message(args[2], args[3], reading);
+        try {
+            sendUpdate(args[0], port, message);
+        } catch (IOException e) {
+            System.out.println("Failed to send message");
+            System.out.println(e.getMessage());
+            return;
+        }
+        System.out.println("Message sent successfully");
     }
 
     private static void sendUpdate(String address, short port, Co2Message message) throws IOException {
         try (var connection = new Socket(address, port)) {
-            final var inStream = connection.getInputStream();
-            final var outStream = connection.getOutputStream();
+            final var inStream = new DataInputStream(new BufferedInputStream(connection.getInputStream()));
+            final var outStream = new BufferedOutputStream(connection.getOutputStream());
 
-            //
+            // checking for the OK
             byte[] code = inStream.readNBytes(2);
             if (!Arrays.equals(code, "OK".getBytes())) {
                 System.out.println("Connection Rejected");
             }
+
+            // printing welcome message
+            int length = inStream.readInt();
+            System.out.println(new String(inStream.readNBytes(length)));
+
             // finally we send
             message.intoStream(outStream);
         };

@@ -13,13 +13,13 @@ public class Server {
 
     public static final Path CSVPATH = Path.of("./Co2_Readings.csv");
 
-    static HandleClient[] clients;
+    static HandleClient[] clients = new HandleClient[4];
 
     public static void main(String[] args) throws IOException {
 
         System.out.println("Opening connection");
 
-        ServerSocket socket = new ServerSocket(getPort(args), 1, getAddress(args));
+        ServerSocket socket = new ServerSocket(getPort(args), 0, getAddress(args));
 
         System.out.printf("Address: %s\nport: %d\n", socket.getInetAddress(), socket.getLocalPort());
 
@@ -39,6 +39,10 @@ public class Server {
 
     private static OptionalInt getFreeClientSlot() {
         for (int i = 0; i < clients.length; i += 1) {
+            if (clients[i] == null) {
+                clients[i] = new HandleClient(null);
+                return OptionalInt.of(i);
+            }
             if (clients[i].isAlive() && !clients[i].isInterrupted())
                 return OptionalInt.of(i);
         }
@@ -82,7 +86,7 @@ final class HandleClient extends Thread {
         streamToClient.flush();
 
         // receive message
-        final InputStream streamFromClient = new BufferedInputStream(client.getInputStream());
+        final var streamFromClient = new BufferedInputStream(client.getInputStream());
 
         // Convert into correct format
         final Co2Message reading = Co2Message.fromStream(streamFromClient);
