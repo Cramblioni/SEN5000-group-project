@@ -1,5 +1,6 @@
 package Data;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -52,11 +53,18 @@ public record Co2Message ( String ID, String postcode, float co2ppm ) {
     }
 
     public void intoStream(OutputStream stream) throws IOException {
-        final byte[] encoded_message = toBytes();
-        byte[] size = new byte[4];
-        ByteBuffer.wrap(size).putInt(encoded_message.length,0);
-        stream.write(size);
-        stream.write(encoded_message);
+        assert ID.length() <= 65535;
+        assert postcode.length() <= 65535;
+
+        final DataOutputStream output = new DataOutputStream(stream);
+
+        output.writeShort((short)ID.length());
+        output.write(ID.getBytes());
+
+        output.writeShort((short)postcode.length());
+        output.write(postcode.getBytes());
+
+        output.writeFloat(co2ppm);
     }
 
     public TimestampedCo2Record timestamp(LocalDateTime timestamp) {

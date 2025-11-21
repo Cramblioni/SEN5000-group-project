@@ -1,13 +1,11 @@
 import Data.Co2Message;
 import Data.TimestampedCo2Record;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.OptionalInt;
 
@@ -23,14 +21,26 @@ public class Server {
 
         ServerSocket socket = new ServerSocket(getPort(args), 1, getAddress(args));
 
+        System.out.printf("Address: %s\nport: %d\n", socket.getInetAddress(), socket.getLocalPort());
+
         while (true) {
             final Socket clientConnection = socket.accept();
+            final OptionalInt slot = getFreeClientSlot();
+            if (slot.isEmpty()) {
+                clientConnection.getOutputStream().write("NO".getBytes());
+                clientConnection.close();
+                continue;
+            }
+            final HandleClient handler = clients[slot.getAsInt()];
+            handler.client = clientConnection;
+            handler.start();
         }
     }
 
     private static OptionalInt getFreeClientSlot() {
         for (int i = 0; i < clients.length; i += 1) {
-            continue;
+            if (clients[i].isAlive() && !clients[i].isInterrupted())
+                return OptionalInt.of(i);
         }
         return OptionalInt.empty();
     }
@@ -39,12 +49,13 @@ public class Server {
         return InetAddress.getLoopbackAddress();
     }
     private static short getPort(String[] _args) {
-        return (short)80085;
+        return (short)13337;
     }
 }
 
 final class HandleClient extends Thread {
-    final Socket client;
+    static final String WELCOME_MESSAGE = "all your data is belong to us";
+    Socket client;
 
     HandleClient(Socket client) {
         this.client = client;
@@ -61,17 +72,27 @@ final class HandleClient extends Thread {
     }
 
     public void serveOne() throws IOException {
-        // receive message
+        // give the all clear and send the expected message
 
-        final byte[] message = {0,1,53,0,1,64,-127,0,0};
+        final DataOutputStream streamToClient = new DataOutputStream(new BufferedOutputStream(client.getOutputStream()));
+
+        streamToClient.write("OK".getBytes());
+        streamToClient.writeInt(WELCOME_MESSAGE.length());
+        streamToClient.write(WELCOME_MESSAGE.getBytes());
+        streamToClient.flush();
+
+        // receive message
+        final InputStream streamFromClient = new BufferedInputStream(client.getInputStream());
 
         // Convert into correct format
-        final Co2Message reading = Co2Message.fromBytes(message);
+        final Co2Message reading = Co2Message.fromStream(streamFromClient);
 
         // Timestamp and record
         final TimestampedCo2Record entry = reading.timestamp(LocalDateTime.now());
 
-        Files.write(Server.CSVPATH, entry.toCsvEntry(), StandardOpenOption.APPEND);
+        // For the moment, we're printing to stdout :)
+        entry.intoStream(new BufferedOutputStream(System.out));
+        System.out.println();
 
         // Close client connection
 

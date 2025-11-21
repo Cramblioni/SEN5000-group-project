@@ -22,7 +22,6 @@ public class Client {
     }
 
     private static void sendUpdate(String address, short port, Co2Message message) throws IOException {
-        final byte[] raw = message.toBytes();
         try (var connection = new Socket(address, port)) {
             final var inStream = connection.getInputStream();
             final var outStream = connection.getOutputStream();
@@ -33,7 +32,7 @@ public class Client {
                 System.out.println("Connection Rejected");
             }
             // finally we send
-            outStream.write(raw);
+            message.intoStream(outStream);
         };
     }
 
