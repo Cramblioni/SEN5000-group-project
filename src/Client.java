@@ -1,6 +1,7 @@
+import Data.Co2Message;
+
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class Client {
@@ -35,14 +36,14 @@ public class Client {
             outStream.write(raw);
         };
     }
-    
+
     private static void printUsage(String hint) {
         System.out.println("""
                 Client [address] [port] [ID] [email] [reading]
                     - [address] : Server address
                     - [port] : Port to connect to
                     - [ID] : YOUR id
-                    - [email] : YOUR email
+                    - [postcode] : postcode of your reading
                     - [reading] : The Co2 PPM reading, without units
                 """);
         if (hint != null) {

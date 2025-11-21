@@ -1,3 +1,6 @@
+import Data.Co2Message;
+import Data.TimestampedCo2Record;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -66,7 +69,7 @@ final class HandleClient extends Thread {
         final Co2Message reading = Co2Message.fromBytes(message);
 
         // Timestamp and record
-        final TimestampedCo2Message entry = reading.timestamp(LocalDateTime.now());
+        final TimestampedCo2Record entry = reading.timestamp(LocalDateTime.now());
 
         Files.write(Server.CSVPATH, entry.toCsvEntry(), StandardOpenOption.APPEND);
 
