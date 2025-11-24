@@ -89,8 +89,10 @@ final class HandleClient extends Thread {
 
         // For the moment, we're printing to stdout :)
         synchronized (Server.lock) {
-            entry.intoStream(new BufferedOutputStream(System.out));
-            System.out.println();
+            try (FileOutputStream output = new FileOutputStream(Server.CSVPATH.toFile(), true)) {
+                entry.intoStream(new BufferedOutputStream(System.out));
+                entry.intoStream(new BufferedOutputStream(output));
+            }
         }
         // Close client connection
 
