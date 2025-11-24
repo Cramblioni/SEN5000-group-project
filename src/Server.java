@@ -14,6 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Server {
 
+    public static final Object lock = new Object();
+
     public static final Path CSVPATH = Path.of("./Co2_Readings.csv");
 
     final static ThreadPoolExecutor clientPool = new ThreadPoolExecutor(
@@ -86,9 +88,10 @@ final class HandleClient extends Thread {
         final TimestampedCo2Record entry = reading.timestamp(LocalDateTime.now());
 
         // For the moment, we're printing to stdout :)
-        entry.intoStream(new BufferedOutputStream(System.out));
-        System.out.println();
-
+        synchronized (Server.lock) {
+            entry.intoStream(new BufferedOutputStream(System.out));
+            System.out.println();
+        }
         // Close client connection
 
         client.close();
