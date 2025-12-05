@@ -1,9 +1,6 @@
 import Data.Co2Message;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
 
@@ -43,19 +40,22 @@ public class Client {
     }
 
     private static void sendUpdate(String address, short port, Co2Message message) throws IOException {
-        try (var connection = new Socket(address, port)) {
-            final var inStream = new DataInputStream(new BufferedInputStream(connection.getInputStream()));
-            final var outStream = new BufferedOutputStream(connection.getOutputStream());
+        try (Socket connection = new Socket(address, port)) {
+            final DataInputStream inStream = new DataInputStream(new BufferedInputStream(connection.getInputStream()));
+            final OutputStream outStream = new BufferedOutputStream(connection.getOutputStream());
 
             // checking for the OK
-            byte[] code = inStream.readNBytes(2);
+            byte[] code = new byte[2];
+            inStream.readFully(code);
             if (!Arrays.equals(code, "OK".getBytes())) {
                 System.out.println("Connection Rejected");
             }
 
             // printing welcome message
             int length = inStream.readInt();
-            System.out.println(new String(inStream.readNBytes(length)));
+            final byte[] welcomeMessage = new byte[length];
+            inStream.readFully(welcomeMessage);
+            System.out.println(new String(welcomeMessage));
 
             // finally we send
             message.intoStream(outStream);
@@ -63,14 +63,14 @@ public class Client {
     }
 
     private static void printUsage(String hint) {
-        System.out.println("""
-                Client [address] [port] [ID] [email] [reading]
-                    - [address] : Server address
-                    - [port] : Port to connect to
-                    - [ID] : YOUR id
-                    - [postcode] : postcode of your reading
-                    - [reading] : The Co2 PPM reading, without units
-                """);
+        System.out.println(
+                "\nClient [address] [port] [ID] [email] [reading]\n" +
+                "\t- [address] : Server address\n" +
+                "\t- [port] : Port to connect to\n" +
+                "\t- [ID] : YOUR id\n" +
+                "\t- [postcode] : postcode of your reading\n" +
+                "\t- [reading] : The Co2 PPM reading, without units\n"
+        );
         if (hint != null) {
             System.out.println(hint);
         }

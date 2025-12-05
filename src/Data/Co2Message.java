@@ -3,16 +3,29 @@ package Data;
 import java.io.*;
 import java.time.LocalDateTime;
 
-public record Co2Message ( String ID, String postcode, float co2ppm ) {
+public class Co2Message {
+    String ID;
+    String postcode;
+    float co2ppm;
+
+    public Co2Message(String ID, String postcode, float co2ppm) {
+        this.ID = ID;
+        this.postcode = postcode;
+        this.co2ppm = co2ppm;
+    }
 
     public static Co2Message fromStream(InputStream stream) throws IOException {
         final DataInputStream reader = new DataInputStream(stream);
 
         final int id_length = reader.readShort();
-        final String id = new String(reader.readNBytes(id_length));
+        final byte[] raw_id = new byte[id_length];
+        reader.readFully(raw_id);
+        final String id = new String(raw_id);
 
         final int postcode_length = reader.readShort();
-        final String postcode = new String(reader.readNBytes(postcode_length));
+        final byte[] raw_postcode = new byte[postcode_length];
+        reader.readFully(raw_postcode);
+        final String postcode = new String(raw_postcode);
 
         final float c20ppm = reader.readFloat();
 

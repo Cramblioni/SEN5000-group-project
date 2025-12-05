@@ -16,7 +16,7 @@ public class Server {
 
     public static final Object lock = new Object();
 
-    public static final Path CSVPATH = Path.of("./Co2_Readings.csv");
+    public static final String CSVPATH = "./Co2_Readings.csv";
 
     final static ThreadPoolExecutor clientPool = new ThreadPoolExecutor(
             4, 4, 2, TimeUnit.MINUTES,
@@ -79,7 +79,7 @@ final class HandleClient extends Thread {
         streamToClient.flush();
 
         // receive message
-        final var streamFromClient = new BufferedInputStream(client.getInputStream());
+        final InputStream streamFromClient = new BufferedInputStream(client.getInputStream());
 
         // Convert into correct format
         final Co2Message reading = Co2Message.fromStream(streamFromClient);
@@ -87,9 +87,9 @@ final class HandleClient extends Thread {
         // Timestamp and record
         final TimestampedCo2Record entry = reading.timestamp(LocalDateTime.now());
 
-        // For the moment, we're printing to stdout :)
+        // Printing to both our `.csv` (saving data) file and stdout (logging data)
         synchronized (Server.lock) {
-            try (FileOutputStream output = new FileOutputStream(Server.CSVPATH.toFile(), true)) {
+            try (FileOutputStream output = new FileOutputStream(Server.CSVPATH, true)) {
                 entry.intoStream(new BufferedOutputStream(System.out));
                 entry.intoStream(new BufferedOutputStream(output));
             }
