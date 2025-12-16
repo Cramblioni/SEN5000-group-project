@@ -1,4 +1,8 @@
 import Data.Co2Message;
+import Validators.Exceptions.InvalidIdException;
+import Validators.Exceptions.PostCodeFormatException;
+import Validators.IdValidator;
+import Validators.PostCodeValidator;
 
 import java.io.*;
 import java.net.Socket;
@@ -130,19 +134,42 @@ public class Client {
             GatherMessageArgs(args);
         }
 
-        //TODO: Validate ID
-        //TODO: Validate postcode
+        // Validating ID
+        while (true) {
+            try { IdValidator.valid(args[0]); }
+            catch (InvalidIdException e) {
+                System.out.println(e.getMessage());
+                args[0] = null;
+                GatherMessageArgs(args);
+                continue;
+            }
+            break;
+        }
+
+        // Validating postcode
+        while (true) {
+            try { PostCodeValidator.valid(args[1]); }
+            catch (PostCodeFormatException e) {
+                System.out.println(e.getMessage());
+                args[1] = null;
+                GatherMessageArgs(args);
+                continue;
+            }
+            break;
+        }
 
         // Validating Reading
         float reading;
-        try {
-            reading = Float.parseFloat(args[2]);
-        } catch (NumberFormatException e) {
-            printUsage("Malformed reading (The reading should be a number)");
-            return null; // UNREACHABLE
-        } catch (NullPointerException e) {
-            printUsage("How?");
-            return null; // UNREACHABLE
+        while (true) {
+            try {
+                reading = Float.parseFloat(args[2]);
+            } catch (NumberFormatException e) {
+                System.out.println("The reading should be a number");
+                args[2] = null;
+                GatherMessageArgs(args);
+                continue;
+            }
+            break;
         }
 
         return new Co2Message(args[0], args[1], reading);
@@ -150,14 +177,20 @@ public class Client {
     private static void GatherMessageArgs(String[] target) {
         final Scanner inputScanner = new Scanner(System.in);
 
-        System.out.print("Enter your ID\n? ");
-        target[0] = inputScanner.nextLine().trim();
+        if (target[0] == null) {
+            System.out.print("Enter your ID\n? ");
+            target[0] = inputScanner.nextLine().trim();
+        }
 
-        System.out.print("Enter your postcode\n? ");
-        target[1] = inputScanner.nextLine().trim();
+        if (target[1] == null) {
+            System.out.print("Enter your postcode\n? ");
+            target[1] = inputScanner.nextLine().trim();
+        }
 
-        System.out.print("Enter the reading\n? ");
-        target[2] = inputScanner.nextLine().trim();
+        if (target[2] == null) {
+            System.out.print("Enter the reading\n? ");
+            target[2] = inputScanner.nextLine().trim();
+        }
     }
 
 }
