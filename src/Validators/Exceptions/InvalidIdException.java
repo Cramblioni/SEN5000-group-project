@@ -1,4 +1,4 @@
-package Parser.Exceptions;
+package Validators.Exceptions;
 
 public class InvalidIdException extends RuntimeException {
     public InvalidIdException(String message) {

@@ -1,6 +1,6 @@
-package Parser;
+package Validators;
 
-import Parser.Exceptions.InvalidIdException;
+import Validators.Exceptions.InvalidIdException;
 
 import java.io.*;
 
@@ -8,16 +8,8 @@ import java.io.*;
 // Essentially ST[0-9]*8
 // :)
 
-public class IdParser {
+public class IdValidator {
     final static int ID_LENGTH = "ST01234567".length();
-    public static String parse(PushbackInputStream source) throws InvalidIdException, IOException {
-            byte[] out = new byte[ID_LENGTH];
-            final int bytes_read = source.read(out);
-            if (bytes_read != ID_LENGTH) throw new InvalidIdException("ID too short");
-            final String result = new String(out);
-            if (!valid(result)) throw new InvalidIdException("Invalid ID format");
-            return result;
-    }
     public static boolean valid(String value) {
         // Length check
         if (value.length() != ID_LENGTH) return false;
