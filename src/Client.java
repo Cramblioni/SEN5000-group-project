@@ -62,23 +62,6 @@ public class Client {
             System.out.println("Message sent successfully");
             socket.close();
         }
-//        boolean success;
-//        try {
-//            try {
-//                success = sendUpdate(socket, message);
-//            } catch (IOException e) {
-//                System.out.println("Failed to send message");
-//                System.out.println(e.getMessage());
-//                socket.close();
-//                return;
-//            }
-//            socket.close();
-//        } catch (IOException e) {
-//            System.out.println("Closing socket failed");
-//            return;
-//        }
-//        if (success)
-//            System.out.println("Message sent successfully");
 
     private static boolean HandleConnectionStatus(Socket connection) throws IOException {
         final DataInputStream inStream = new DataInputStream(new BufferedInputStream(connection.getInputStream()));
@@ -100,7 +83,6 @@ public class Client {
     private static boolean SendUpdate(Socket connection, Co2Message message) throws IOException {
         final OutputStream outStream = new BufferedOutputStream(connection.getOutputStream());
 
-        // finally we send
         message.intoStream(outStream);
         outStream.flush();
         return true;
@@ -109,7 +91,7 @@ public class Client {
 
     private static void printUsage(String hint) {
         System.out.println(
-                "\nClient [address] [port] [ID] [postcode] [reading]\n" +
+                "\nClient ([address] [port]) ([ID] [postcode] [reading])\n" +
                 "\t- [address] : Server address\n" +
                 "\t- [port] : Port to connect to\n" +
                 "\t- [ID] : YOUR id\n" +
@@ -142,7 +124,6 @@ public class Client {
             return null; // UNREACHABLE
         }
     }
-
     private static Co2Message MakeMessage(String[] args) {
         if (args == null || args.length == 0) {
             args = new String[3];
