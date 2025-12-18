@@ -15,6 +15,10 @@ public class Client {
         String[] addr_args;
         String[] data_args;
         switch (args.length) {
+            case 0: // Nothing provided
+                addr_args = new String[0];
+                data_args = new String[0];
+                break;
             case 2: // Address Only
                 addr_args = args;
                 data_args = new String[0];

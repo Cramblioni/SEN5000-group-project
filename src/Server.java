@@ -5,8 +5,10 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -43,10 +45,33 @@ public class Server {
     }
 
     private static InetAddress getAddress(String[] _args) {
-        return InetAddress.getLoopbackAddress();
+        if (_args.length < 1) {
+            return InetAddress.getLoopbackAddress();
+        }
+        if (
+                !Arrays.equals(_args[0].toCharArray(), "localhost".toCharArray())
+            && !Character.isDigit(_args[0].toCharArray()[0])
+        ) {
+            System.out.println("Unknown target host (IP expected), resorting to default");
+            return getAddress(new String[0]);
+        }
+        try {
+            return InetAddress.getByName(_args[0].trim());
+        } catch (UnknownHostException e) {
+            System.out.println("Unknown target host, resorting to default");
+            return getAddress(new String[0]);
+        }
     }
     private static short getPort(String[] _args) {
-        return (short)13337;
+        if (_args.length < 2) {
+            return (short) 13337;
+        }
+        try {
+            return Short.parseShort(_args[1]);
+        } catch (NumberFormatException e) {
+            System.out.println("Malformed Port, resorting to default");
+            return getPort(new String[0]);
+        }
     }
 }
 
